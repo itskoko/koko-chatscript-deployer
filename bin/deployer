@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+
+require 'net/http'
+require 'json'
+
+syntax   = "deployer verify dev|prod\ndeployer upload dev|prod [tag]"
+filename = 'chat.yml'
+
+path = case ARGV[0]
+when 'verify'
+  "verification"
+when 'upload'
+  "programs"
+else
+  puts syntax
+  exit 1
+end
+
+url = case ARGV[1]
+when 'dev'
+  "https://koko-api-dev.kemoko.co/chat_script/"
+when 'prod'
+  "https://koko-api-production.kemoko.co/chat_script/"
+else
+  puts syntax
+  exit 1
+end
+
+body = case ARGV[0]
+when 'verify'
+  { source: File.read(filename, encoding: 'utf-8') }
+when 'upload'
+  if tag = ARGV[2]
+    { tag: tag, source: File.read(filename, encoding: 'utf-8') }
+  else
+    puts syntax
+    exit 1
+  end
+else
+  puts syntax
+  exit 1
+end
+
+uri = URI.join(url,path)
+
+request = Net::HTTP::Post.new(uri)
+request["content-type"]  = 'application/json'
+request["authorization"] = "Token token=#{ENV["TOKEN"]}"
+request.body = body.to_json
+
+http = Net::HTTP.new(uri.hostname, uri.port)
+http.use_ssl = true
+
+puts "#{ARGV.first.capitalize} #{filename}..."
+result = http.request(request)
+
+if result.is_a?(Net::HTTPSuccess)
+  puts "Success!"
+  exit 0
+else
+  puts "Failed: #{JSON.load(result.body).join("\n")}"
+  exit 1
+end
