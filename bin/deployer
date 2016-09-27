@@ -3,8 +3,16 @@
 require 'net/http'
 require 'json'
 
-syntax   = "deployer verify dev|prod\ndeployer upload dev|prod [tag]"
-filename = 'chat.yml'
+syntax        = "deployer verify dev|prod\ndeployer upload dev|prod [tag]"
+filename      = 'chat.yml'
+type_filename = 'TYPE'
+
+unless File.exists?(type_filename)
+  puts "File 'TYPE' must contain the type of the chat script"
+  exit 1
+end
+
+type = File.read(type_filename).strip
 
 path = case ARGV[0]
 when 'verify'
@@ -31,7 +39,7 @@ when 'verify'
   { source: File.read(filename, encoding: 'utf-8') }
 when 'upload'
   if tag = ARGV[2]
-    { tag: tag, source: File.read(filename, encoding: 'utf-8') }
+    { type: type, tag: tag, source: File.read(filename, encoding: 'utf-8') }
   else
     puts syntax
     exit 1
