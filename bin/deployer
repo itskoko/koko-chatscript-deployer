@@ -3,7 +3,7 @@
 require 'net/http'
 require 'json'
 
-syntax        = "deployer verify dev|prod\ndeployer upload dev|prod [tag]"
+syntax        = "deployer verify local|dev|prod\ndeployer upload local|dev|prod [tag]"
 filename      = 'chat.yml'
 type_filename = 'TYPE'
 
@@ -25,6 +25,8 @@ else
 end
 
 url = case ARGV[1]
+when 'local'
+  "http://localhost:3000/chat_script/"
 when 'dev'
   "https://koko-api-dev.kemoko.co/chat_script/"
 when 'prod'
@@ -57,7 +59,7 @@ request["authorization"] = "Token token=#{ENV["TOKEN"]}"
 request.body = body.to_json
 
 http = Net::HTTP.new(uri.hostname, uri.port)
-http.use_ssl = true
+http.use_ssl = true if uri.scheme == 'https'
 
 puts "#{ARGV.first.capitalize} #{filename}..."
 result = http.request(request)
